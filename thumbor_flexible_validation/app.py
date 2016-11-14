@@ -60,6 +60,17 @@ class RewriteHandler(ImagingHandler):
                     self.request.path = unescaped_url
                     return
 
+            # Undo %3A -> %253A encoding (can have multiple 252525...)
+            quoted_target = quote(load_target)
+            encoded_percentage = re.match("https?(%(25)+3A)\/\/", quoted_target)
+            if encoded_percentage:
+                fixed_target = quoted_target.replace(encoded_percentage.group(1), '%3A')
+                fixed_url = "/%s/%s/%s" % (kw['hash'], url_options, fixed_target)
+                if self.validate_url(fixed_url, security_key):
+                    kw['image'] = unquote(fixed_target)
+                    self.request.path = fixed_url
+                    return
+
             # Undo collapsed slashes
             collapsed_slash = re.match("(https?:\/)[^/]", load_target)
             if collapsed_slash:

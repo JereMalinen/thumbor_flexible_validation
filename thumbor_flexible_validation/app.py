@@ -9,6 +9,12 @@ from thumbor.app import ThumborServiceApp
 from thumbor.context import RequestParameters
 from urllib import quote, unquote
 
+
+RE_ENCODED_PERCENTAGE = re.compile('https?(%(25)+3A)\/\/')
+RE_SINGLE_SLASH_ENCODED = re.compile('(https?%3A\/)[^/]')
+RE_SINGLE_SLASH = re.compile('(https?:\/)[^/]')
+
+
 class RewriteHandler(ImagingHandler):
     def validate_url(self, url, security_key):
         valid = True
@@ -51,7 +57,7 @@ class RewriteHandler(ImagingHandler):
 
             # Undo collapsed slashes with encoded `:`
             load_target_with_encoded_colon = load_target.replace(':', '%3A')
-            collapsed_slash = re.match("(https?%3A\/)[^/]", load_target_with_encoded_colon)
+            collapsed_slash = RE_SINGLE_SLASH_ENCODED.match(load_target_with_encoded_colon)
             if collapsed_slash:
                 load_target_with_encoded_colon = load_target_with_encoded_colon.replace(collapsed_slash.group(1), collapsed_slash.group(1) + "/")
                 unescaped_url = "/%s/%s/%s" % (kw['hash'], url_options, load_target_with_encoded_colon)
@@ -62,7 +68,7 @@ class RewriteHandler(ImagingHandler):
 
             # Undo %3A -> %253A encoding (can have multiple 252525...)
             quoted_target = quote(load_target)
-            encoded_percentage = re.match("https?(%(25)+3A)\/\/", quoted_target)
+            encoded_percentage = RE_ENCODED_PERCENTAGE.match(quoted_target)
             if encoded_percentage:
                 fixed_target = quoted_target.replace(encoded_percentage.group(1), '%3A')
                 fixed_url = "/%s/%s/%s" % (kw['hash'], url_options, fixed_target)
@@ -72,7 +78,7 @@ class RewriteHandler(ImagingHandler):
                     return
 
             # Undo collapsed slashes
-            collapsed_slash = re.match("(https?:\/)[^/]", load_target)
+            collapsed_slash = RE_SINGLE_SLASH.match(load_target)
             if collapsed_slash:
                 load_target = load_target.replace(collapsed_slash.group(1), collapsed_slash.group(1) + "/")
                 unescaped_url = "/%s/%s/%s" % (kw['hash'], url_options, load_target)
@@ -107,6 +113,7 @@ class RewriteHandler(ImagingHandler):
         self.validate_image_permutations(kw)
         self.check_image(kw)
 
+
 class ThumborServiceProxy(ThumborServiceApp):
     def __init__(self, context):
         ThumborServiceApp.__init__(self, context)
@@ -122,4 +129,3 @@ class ThumborServiceProxy(ThumborServiceApp):
             (Url.regex(), RewriteHandler, {'context': self.context})
         )
         return handlers
-

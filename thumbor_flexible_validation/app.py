@@ -49,7 +49,7 @@ class RewriteHandler(ImagingHandler):
 
             load_target = kw['image']
 
-	    # Undo collapsed slashes with encoded `:`
+            # Undo collapsed slashes with encoded `:`
             load_target_with_encoded_colon = load_target.replace(':', '%3A')
             collapsed_slash = re.match("(https?%3A\/)[^/]", load_target_with_encoded_colon)
             if collapsed_slash:

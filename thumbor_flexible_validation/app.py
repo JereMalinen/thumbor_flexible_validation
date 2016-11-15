@@ -55,8 +55,15 @@ class RewriteHandler(ImagingHandler):
 
             load_target = kw['image']
 
-            # Undo collapsed slashes with encoded `:`
+            # Undo `:` decoding
             load_target_with_encoded_colon = load_target.replace(':', '%3A')
+            unescaped_url = "/%s/%s/%s" % (kw['hash'], url_options, load_target_with_encoded_colon)
+            if self.validate_url(unescaped_url, security_key):
+                kw['image'] = unquote(load_target_with_encoded_colon)
+                self.request.path = unescaped_url
+                return
+
+            # Undo collapsed slashes with encoded `:`
             collapsed_slash = RE_SINGLE_SLASH_ENCODED.match(load_target_with_encoded_colon)
             if collapsed_slash:
                 load_target_with_encoded_colon = load_target_with_encoded_colon.replace(collapsed_slash.group(1), collapsed_slash.group(1) + "/")

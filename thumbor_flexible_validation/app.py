@@ -67,7 +67,7 @@ class RewriteHandler(ImagingHandler):
                     return
 
             # Undo %3A -> %253A encoding (can have multiple 252525...)
-            quoted_target = quote(load_target)
+            quoted_target = quote(load_target.encode('utf-8'))
             encoded_percentage = RE_ENCODED_PERCENTAGE.match(quoted_target)
             if encoded_percentage:
                 fixed_target = quoted_target.replace(encoded_percentage.group(1), '%3A')
@@ -88,7 +88,7 @@ class RewriteHandler(ImagingHandler):
                     return
 
             # Attempt to validate with unescaped quoting
-            load_target = quote(load_target, safe='')
+            load_target = quote(load_target.encode('utf-8'), safe='')
             unescaped_url = "/%s/%s/%s" % (kw['hash'], url_options, load_target)
             if self.validate_url(unescaped_url, security_key):
                 kw['image'] = unquote(load_target)
@@ -97,7 +97,7 @@ class RewriteHandler(ImagingHandler):
 
             # Attempt to validate with unquoting
             load_target = unquote(kw['image'])
-            unescaped_url = "/%s/%s/%s" % (kw['hash'], url_options, quote(load_target, safe=''))
+            unescaped_url = "/%s/%s/%s" % (kw['hash'], url_options, quote(load_target.encode('utf-8'), safe=''))
             if self.validate_url(unescaped_url, security_key):
                 self.request.path = unescaped_url
                 kw['image'] = load_target
